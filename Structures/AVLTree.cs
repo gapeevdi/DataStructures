@@ -81,6 +81,33 @@ namespace Structures
             BalanceTree(newNode);
         }
 
+
+        public bool Contains(T value) => Find(value) != null;
+        
+        private Node<T> Find(T value)
+        {
+            var currentNode = _root;
+            Node<T> foundNode = null;
+
+            while (currentNode != null && foundNode == null)
+            {
+                if (value.CompareTo(currentNode.Value) == 0)
+                {
+                    foundNode = currentNode;
+                }
+                else if (value.CompareTo(currentNode.Value) < 0)
+                {
+                    currentNode = currentNode.Left;
+                }
+                else
+                {
+                    currentNode = currentNode.Right;
+                }
+            }
+
+            return foundNode;
+        }
+
         private void PutInPlaceNode(Node<T> newNode)
         {
             var newNodeParent = _root;
