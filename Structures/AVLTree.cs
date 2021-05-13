@@ -65,10 +65,12 @@ namespace Structures
         }
 
         public int Height => _root?.Height() ?? 0;
+        public int Count { get; private set; }
         
         public void Add(T value)
         {
             var newNode = new Node<T>(value);
+            Count++;
             if (_root == null)
             {
                 _root = newNode;
