@@ -68,6 +68,103 @@ namespace Structures
 
                 return difference;
             }
+            
+            
+            public Node<TValue> BalanceSubTree()
+            {
+                var nextNodeToConsider = this;
+                var newSubTreeRoot = this;
+                while (nextNodeToConsider != null)
+                {
+                    if (nextNodeToConsider.HeightDifference(out var higherSubTree) == 2)
+                    {
+                        if (higherSubTree == nextNodeToConsider.Left)
+                        {
+                            higherSubTree.HeightDifference(out var higher);
+                         
+                            if (higher == higherSubTree.Left)
+                            {
+                                nextNodeToConsider = nextNodeToConsider.RightRotation(); // higherSubTree
+                            }
+                            else if (higher == higherSubTree.Right)
+                            {
+                                nextNodeToConsider = higherSubTree.LeftRightRotation();
+                            }
+                        }
+                        else if(higherSubTree == nextNodeToConsider.Right)
+                        {
+                            higherSubTree.HeightDifference(out var higher);
+                            if (higher == higherSubTree.Right)
+                            {
+                                nextNodeToConsider = nextNodeToConsider.LeftRotation();
+                            }
+                            else if (higher == higherSubTree.Left)
+                            {
+                                nextNodeToConsider = higherSubTree.RightLeftRotation();
+                            }
+                        }
+                    }
+
+                    newSubTreeRoot = nextNodeToConsider;
+                    nextNodeToConsider = nextNodeToConsider.Parent;
+                }
+
+                return newSubTreeRoot;
+            }
+            
+            public Node<TValue> LeftRotation()
+            {
+            
+                var newRoot = this.Right;
+                var leftSubTree = newRoot.Left;
+
+                newRoot.Parent = this.Parent;
+                newRoot.Parent?.ReplaceChild(this, newRoot);
+
+                newRoot.Left = this;
+                this.Parent = newRoot;
+
+                this.Right = leftSubTree;
+
+                if (leftSubTree != null)
+                {
+                    leftSubTree.Parent = this;
+                }
+
+                return newRoot;
+            }
+            
+            public Node<TValue> RightRotation()
+            {
+                var newRoot = this.Left;
+                var rightSubTree = newRoot.Right;
+            
+                newRoot.Parent = this.Parent;
+                newRoot.Parent?.ReplaceChild(this, newRoot);
+
+                newRoot.Right = this;
+                this.Parent = newRoot;
+
+                this.Left = rightSubTree;
+                if (rightSubTree != null)
+                {
+                    rightSubTree.Parent = this;
+                }
+
+                return newRoot;
+            }
+            
+            public Node<TValue> LeftRightRotation()
+            {
+                var newSubTreeRoot = LeftRotation();
+                return newSubTreeRoot.Parent.RightRotation();
+            }
+
+            public Node<TValue> RightLeftRotation()
+            {
+                var newSubTreeRoot = this.RightRotation();
+                return newSubTreeRoot.Parent.LeftRotation();
+            }
         }
     }
 }

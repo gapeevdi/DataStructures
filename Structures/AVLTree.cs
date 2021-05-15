@@ -10,7 +10,6 @@ namespace Structures
 
         public int Height => _root?.Height() ?? 0;
         public int Count { get; private set; }
-        
         public bool Contains(T value) => Find(value) != null;
         
         public void Add(T value)
@@ -19,13 +18,12 @@ namespace Structures
            
             if (_root == null)
             {
-                _root = newNode;
-                BalanceTree(_root);
+                _root = newNode.BalanceSubTree();
             }
             else
             {
                 var subTreeRoot = PutInPlaceNode(newNode);    
-                BalanceTree(subTreeRoot);
+                _root = subTreeRoot.BalanceSubTree();
             }
             
             Count++;
@@ -35,12 +33,8 @@ namespace Structures
         {
             var nodeToRemove = Find(value);
             var subTreeToBalance = RemoveImp(nodeToRemove);
+            _root = subTreeToBalance?.BalanceSubTree();
             
-            if (subTreeToBalance != null)
-            {
-                BalanceTree(subTreeToBalance);
-            }
-
             Count--;
         }
         
@@ -163,97 +157,5 @@ namespace Structures
             return newNodeParent;
         }
 
-        private void BalanceTree(Node<T> node)
-        {
-            var subTreeRoot = node;
-            while (subTreeRoot != null)
-            {
-                if (subTreeRoot.HeightDifference(out var higherSubTree) == 2)
-                {
-                    if (higherSubTree == subTreeRoot.Left)
-                    {
-                         higherSubTree.HeightDifference(out var higher);
-                         
-                         if (higher == higherSubTree.Left)
-                         {
-                             subTreeRoot = RightRotation(subTreeRoot); // higherSubTree
-                         }
-                         else if (higher == higherSubTree.Right)
-                         {
-                             subTreeRoot = LeftRightRotation(higherSubTree);
-                         }
-                    }
-                    else if(higherSubTree == subTreeRoot.Right)
-                    {
-                        higherSubTree.HeightDifference(out var higher);
-                        if (higher == higherSubTree.Right)
-                        {
-                            subTreeRoot = LeftRotation(subTreeRoot);
-                        }
-                        else if (higher == higherSubTree.Left)
-                        {
-                            subTreeRoot = RightLeftRotation(higherSubTree);
-                        }
-                    }
-                }
-
-                _root = subTreeRoot;
-                subTreeRoot = subTreeRoot.Parent;
-            }
-        }
-
-        private Node<T> LeftRotation(Node<T> node)
-        {
-            
-            var newRoot = node.Right;
-            var leftSubTree = newRoot.Left;
-
-            newRoot.Parent = node.Parent;
-            newRoot.Parent?.ReplaceChild(node, newRoot);
-
-            newRoot.Left = node;
-            node.Parent = newRoot;
-
-            node.Right = leftSubTree;
-
-            if (leftSubTree != null)
-            {
-                leftSubTree.Parent = node;
-            }
-
-            return newRoot;
-        }
-
-        private Node<T> RightRotation(Node<T> node)
-        {
-            var newRoot = node.Left;
-            var rightSubTree = newRoot.Right;
-            
-            newRoot.Parent = node.Parent;
-            newRoot.Parent?.ReplaceChild(node, newRoot);
-
-            newRoot.Right = node;
-            node.Parent = newRoot;
-
-            node.Left = rightSubTree;
-            if (rightSubTree != null)
-            {
-                rightSubTree.Parent = node;
-            }
-
-            return newRoot;
-        }
-
-        private Node<T> LeftRightRotation(Node<T> node)
-        {
-            var newSubTreeRoot = LeftRotation(node);
-            return RightRotation(newSubTreeRoot.Parent);
-        }
-
-        private Node<T> RightLeftRotation(Node<T> node)
-        {
-            var newSubTreeRoot = RightRotation(node);
-            return LeftRotation(newSubTreeRoot.Parent);
-        }
     }
 }
