@@ -1,85 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Structures
 {
-    public class AVLTree<T>
+    public partial class AVLTree<T>
     where T : IComparable<T>
     {
 
         private Node<T> _root;
-        
-        private class Node<T>
-        where T : IComparable<T>
-        {
-            public Node(T value)
-            {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
-
-                Value = value;
-            }
-            
-            public T Value { get; set; }
-            
-            public Node<T> Parent { get; set; }
-            
-            public Node<T> Left { get; set; }
-            public Node<T> Right { get; set; }
-            public bool IsRoot => Parent == null;
-            public bool IsLeaf => Left == null && Right == null;
-
-            public void ReplaceChild(Node<T> nodeToReplace, Node<T> newNode)
-            {
-                if (ReferenceEquals(Left, nodeToReplace))
-                {
-                    Left = newNode;
-                }
-                else if (ReferenceEquals(Right, nodeToReplace))
-                {
-                    Right = newNode;
-                }
-            }
-
-            public void RemoveChild(Node<T> nodeToRemove)
-            {
-                if (ReferenceEquals(Left, nodeToRemove))
-                {
-                    Left = null;
-                }
-                else if (ReferenceEquals(Right, nodeToRemove))
-                {
-                    Right = null;
-                }
-            }
-
-            public int Height()
-            {
-                if (IsLeaf)
-                {
-                    return 0;
-                }
-                var leftSubTreeHeight = Left?.Height() ?? 0;
-                var rightSubTreeHeight = Right?.Height() ?? 0;
-                return Math.Max(leftSubTreeHeight, rightSubTreeHeight) + 1;
-            }
-
-            public int HeightDifference(out Node<T> higherSubTree)
-            {
-                var leftSubTreeHeight = Left?.Height() ?? -1;
-                var rightSubTreeHeight = Right?.Height() ?? -1;
-                var difference = Math.Abs(leftSubTreeHeight - rightSubTreeHeight);
-                
-                higherSubTree = leftSubTreeHeight > rightSubTreeHeight ? Left : Right;
-
-                return difference;
-            }
-        }
 
         public int Height => _root?.Height() ?? 0;
         public int Count { get; private set; }
+        
+        public bool Contains(T value) => Find(value) != null;
         
         public void Add(T value)
         {
@@ -102,11 +34,11 @@ namespace Structures
         public void Remove(T value)
         {
             var nodeToRemove = Find(value);
-            var substituteNode = RemoveImp(nodeToRemove);
+            var subTreeToBalance = RemoveImp(nodeToRemove);
             
-            if (substituteNode != null)
+            if (subTreeToBalance != null)
             {
-                BalanceTree(substituteNode);
+                BalanceTree(subTreeToBalance);
             }
 
             Count--;
@@ -116,23 +48,23 @@ namespace Structures
         private Node<T> RemoveImp(Node<T> nodeToRemove)
         {
             var parent = nodeToRemove?.Parent;
-            Node<T> newSubTreeRoot = null; 
+            Node<T> subTreeToBalance = null; 
             if (nodeToRemove != null)
             {
                 
                 // case 1 - leaf
                 if (nodeToRemove.IsLeaf)
                 {
-                    newSubTreeRoot = parent;
+                    subTreeToBalance = parent;
                     parent?.RemoveChild(nodeToRemove);
                 }
                 
                 // case 2 - right child exists and left is null
                 else if (nodeToRemove.Right != null && nodeToRemove.Left == null)
                 {
-                    newSubTreeRoot = nodeToRemove.Right; 
-                    parent?.ReplaceChild(nodeToRemove, newSubTreeRoot);
-                    newSubTreeRoot.Parent = parent;
+                    subTreeToBalance = nodeToRemove.Right; 
+                    parent?.ReplaceChild(nodeToRemove, subTreeToBalance);
+                    subTreeToBalance.Parent = parent;
                 }
 
                 // case 3 - left child exists so looking for the max value from the subtree
@@ -140,23 +72,23 @@ namespace Structures
                 // from the left subtree
                 else
                 {
-                    newSubTreeRoot = FindMaxNode(nodeToRemove.Left);
-                    nodeToRemove.Value = newSubTreeRoot.Value;
-                    newSubTreeRoot.Parent?.ReplaceChild(newSubTreeRoot, newSubTreeRoot.Left);
-                    if (newSubTreeRoot.Left != null)
+                    subTreeToBalance = FindMaxNode(nodeToRemove.Left);
+                    nodeToRemove.Value = subTreeToBalance.Value;
+                    subTreeToBalance.Parent?.ReplaceChild(subTreeToBalance, subTreeToBalance.Left);
+                    if (subTreeToBalance.Left != null)
                     {
-                        newSubTreeRoot.Left.Parent = newSubTreeRoot.Parent;
+                        subTreeToBalance.Left.Parent = subTreeToBalance.Parent;
                     } 
-                    newSubTreeRoot = nodeToRemove;
+                    subTreeToBalance = nodeToRemove;
                 }
                 
                 if (nodeToRemove.IsRoot)
                 {
-                    _root = newSubTreeRoot;
+                    _root = subTreeToBalance;
                 }
             }
             
-            return newSubTreeRoot;
+            return subTreeToBalance;
         }
 
         private Node<T> FindMaxNode(Node<T> subTreeRoot)
@@ -169,9 +101,6 @@ namespace Structures
 
             return maxNode;
         }
-
-
-        public bool Contains(T value) => Find(value) != null;
         
         private Node<T> Find(T value)
         {
