@@ -29,6 +29,7 @@ namespace Structures
             public Node<T> Left { get; set; }
             public Node<T> Right { get; set; }
             public bool IsRoot => Parent == null;
+            public bool IsLeaf => Left == null && Right == null;
 
             public void ReplaceChild(Node<T> nodeToReplace, Node<T> newNode)
             {
@@ -56,7 +57,7 @@ namespace Structures
 
             public int Height()
             {
-                if (Left == null && Right == null)
+                if (IsLeaf)
                 {
                     return 0;
                 }
@@ -120,7 +121,7 @@ namespace Structures
             {
                 
                 // case 1 - leaf
-                if (nodeToRemove.Left == null && nodeToRemove.Right == null)
+                if (nodeToRemove.IsLeaf)
                 {
                     newSubTreeRoot = parent;
                     parent?.RemoveChild(nodeToRemove);
@@ -235,7 +236,6 @@ namespace Structures
 
         private void BalanceTree(Node<T> node)
         {
-            //_root.Parent is null
             var subTreeRoot = node;
             while (subTreeRoot != null)
             {
