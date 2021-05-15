@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Xml.Schema;
+using System.Collections.Generic;
 
 namespace Structures
 {
@@ -10,6 +10,7 @@ namespace Structures
         private Node<T> _root;
         
         private class Node<T>
+        where T : IComparable<T>
         {
             public Node(T value)
             {
@@ -21,7 +22,7 @@ namespace Structures
                 Value = value;
             }
             
-            public T Value { get; }
+            public T Value { get; set; }
             
             public Node<T> Parent { get; set; }
             
@@ -38,6 +39,18 @@ namespace Structures
                 else if (ReferenceEquals(Right, nodeToReplace))
                 {
                     Right = newNode;
+                }
+            }
+
+            public void RemoveChild(Node<T> nodeToRemove)
+            {
+                if (ReferenceEquals(Left, nodeToRemove))
+                {
+                    Left = null;
+                }
+                else if (ReferenceEquals(Right, nodeToRemove))
+                {
+                    Right = null;
                 }
             }
 
@@ -70,15 +83,90 @@ namespace Structures
         public void Add(T value)
         {
             var newNode = new Node<T>(value);
-            Count++;
+           
             if (_root == null)
             {
                 _root = newNode;
-                return;
+                BalanceTree(_root);
+            }
+            else
+            {
+                var subTreeRoot = PutInPlaceNode(newNode);    
+                BalanceTree(subTreeRoot);
+            }
+            
+            Count++;
+        }
+
+        public void Remove(T value)
+        {
+            var nodeToRemove = Find(value);
+            var substituteNode = RemoveImp(nodeToRemove);
+            
+            if (substituteNode != null)
+            {
+                BalanceTree(substituteNode);
             }
 
-            PutInPlaceNode(newNode);
-            BalanceTree(newNode);
+            Count--;
+        }
+        
+        
+        private Node<T> RemoveImp(Node<T> nodeToRemove)
+        {
+            var parent = nodeToRemove?.Parent;
+            Node<T> newSubTreeRoot = null; 
+            if (nodeToRemove != null)
+            {
+                
+                // case 1 - leaf
+                if (nodeToRemove.Left == null && nodeToRemove.Right == null)
+                {
+                    newSubTreeRoot = parent;
+                    parent?.RemoveChild(nodeToRemove);
+                }
+                
+                // case 2 - right child exists and left is null
+                else if (nodeToRemove.Right != null && nodeToRemove.Left == null)
+                {
+                    newSubTreeRoot = nodeToRemove.Right; 
+                    parent?.ReplaceChild(nodeToRemove, newSubTreeRoot);
+                    newSubTreeRoot.Parent = parent;
+                }
+
+                // case 3 - left child exists so looking for the max value from the subtree
+                // in this case we need to replace a value of nodeToRemove node with the max value
+                // from the left subtree
+                else
+                {
+                    newSubTreeRoot = FindMaxNode(nodeToRemove.Left);
+                    nodeToRemove.Value = newSubTreeRoot.Value;
+                    newSubTreeRoot.Parent?.ReplaceChild(newSubTreeRoot, newSubTreeRoot.Left);
+                    if (newSubTreeRoot.Left != null)
+                    {
+                        newSubTreeRoot.Left.Parent = newSubTreeRoot.Parent;
+                    } 
+                    newSubTreeRoot = nodeToRemove;
+                }
+                
+                if (nodeToRemove.IsRoot)
+                {
+                    _root = newSubTreeRoot;
+                }
+            }
+            
+            return newSubTreeRoot;
+        }
+
+        private Node<T> FindMaxNode(Node<T> subTreeRoot)
+        {
+            var maxNode = subTreeRoot;
+            while (maxNode.Right != null)
+            {
+                maxNode = maxNode.Right;
+            }
+
+            return maxNode;
         }
 
 
@@ -108,7 +196,7 @@ namespace Structures
             return foundNode;
         }
 
-        private void PutInPlaceNode(Node<T> newNode)
+        private Node<T> PutInPlaceNode(Node<T> newNode)
         {
             var newNodeParent = _root;
             var rootElementFound = false;
@@ -141,11 +229,14 @@ namespace Structures
                     }
                 }
             }
+
+            return newNodeParent;
         }
 
-        private void BalanceTree(Node<T> newNode)
+        private void BalanceTree(Node<T> node)
         {
-            var subTreeRoot = newNode.Parent;
+            //_root.Parent is null
+            var subTreeRoot = node;
             while (subTreeRoot != null)
             {
                 if (subTreeRoot.HeightDifference(out var higherSubTree) == 2)
@@ -156,11 +247,11 @@ namespace Structures
                          
                          if (higher == higherSubTree.Left)
                          {
-                             subTreeRoot = RightRotation(higherSubTree);
+                             subTreeRoot = RightRotation(subTreeRoot); // higherSubTree
                          }
                          else if (higher == higherSubTree.Right)
                          {
-                             subTreeRoot = LeftRightRotation(higherSubTree.Right);
+                             subTreeRoot = LeftRightRotation(higherSubTree);
                          }
                     }
                     else if(higherSubTree == subTreeRoot.Right)
@@ -168,11 +259,11 @@ namespace Structures
                         higherSubTree.HeightDifference(out var higher);
                         if (higher == higherSubTree.Right)
                         {
-                            subTreeRoot = LeftRotation(higherSubTree);
+                            subTreeRoot = LeftRotation(subTreeRoot);
                         }
                         else if (higher == higherSubTree.Left)
                         {
-                            subTreeRoot = RightLeftRotation(higherSubTree.Left);
+                            subTreeRoot = RightLeftRotation(higherSubTree);
                         }
                     }
                 }
@@ -184,57 +275,56 @@ namespace Structures
 
         private Node<T> LeftRotation(Node<T> node)
         {
-            var subTreeParent = node.Parent;
-            var nodeLeftSubTree = node.Left;
-            var parentParent = subTreeParent.Parent;
             
-            node.Parent = subTreeParent.Parent;
-            node.Left = subTreeParent;
-            subTreeParent.Parent = node;
-            subTreeParent.Right = nodeLeftSubTree;
+            var newRoot = node.Right;
+            var leftSubTree = newRoot.Left;
 
-            parentParent?.ReplaceChild(subTreeParent, node);
-            
-            if (nodeLeftSubTree != null)
+            newRoot.Parent = node.Parent;
+            newRoot.Parent?.ReplaceChild(node, newRoot);
+
+            newRoot.Left = node;
+            node.Parent = newRoot;
+
+            node.Right = leftSubTree;
+
+            if (leftSubTree != null)
             {
-                nodeLeftSubTree.Parent = subTreeParent;    
+                leftSubTree.Parent = node;
             }
 
-            return node;
+            return newRoot;
         }
 
         private Node<T> RightRotation(Node<T> node)
         {
-            var subTreeParent = node.Parent;
-            var nodeRightSubTree = node.Right;
-            var parentParent = subTreeParent.Parent;
+            var newRoot = node.Left;
+            var rightSubTree = newRoot.Right;
             
-            node.Parent = subTreeParent.Parent;
-            subTreeParent.Parent = node;
-            
-            node.Right = subTreeParent;
-            subTreeParent.Left = nodeRightSubTree;
+            newRoot.Parent = node.Parent;
+            newRoot.Parent?.ReplaceChild(node, newRoot);
 
-            parentParent?.ReplaceChild(subTreeParent, node);
-            
-            if (nodeRightSubTree != null)
+            newRoot.Right = node;
+            node.Parent = newRoot;
+
+            node.Left = rightSubTree;
+            if (rightSubTree != null)
             {
-                nodeRightSubTree.Parent = subTreeParent;    
+                rightSubTree.Parent = node;
             }
 
-            return node;
+            return newRoot;
         }
 
         private Node<T> LeftRightRotation(Node<T> node)
         {
             var newSubTreeRoot = LeftRotation(node);
-            return RightRotation(newSubTreeRoot);
+            return RightRotation(newSubTreeRoot.Parent);
         }
 
         private Node<T> RightLeftRotation(Node<T> node)
         {
             var newSubTreeRoot = RightRotation(node);
-            return LeftRotation(newSubTreeRoot);
+            return LeftRotation(newSubTreeRoot.Parent);
         }
     }
 }
