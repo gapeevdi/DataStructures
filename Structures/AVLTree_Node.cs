@@ -165,6 +165,17 @@ namespace Structures
                 var newSubTreeRoot = this.RightRotation();
                 return newSubTreeRoot.Parent.LeftRotation();
             }
+            
+            public Node<TValue> FindMaxNode()
+            {
+                var maxNode = this;
+                while (maxNode.Right != null)
+                {
+                    maxNode = maxNode.Right;
+                }
+
+                return maxNode;
+            }
         }
     }
 }

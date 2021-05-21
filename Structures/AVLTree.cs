@@ -66,7 +66,7 @@ namespace Structures
                 // from the left subtree
                 else
                 {
-                    subTreeToBalance = FindMaxNode(nodeToRemove.Left);
+                    subTreeToBalance = nodeToRemove.Left.FindMaxNode();
                     nodeToRemove.Value = subTreeToBalance.Value;
                     subTreeToBalance.Parent?.ReplaceChild(subTreeToBalance, subTreeToBalance.Left);
                     if (subTreeToBalance.Left != null)
@@ -85,16 +85,7 @@ namespace Structures
             return subTreeToBalance;
         }
 
-        private Node<T> FindMaxNode(Node<T> subTreeRoot)
-        {
-            var maxNode = subTreeRoot;
-            while (maxNode.Right != null)
-            {
-                maxNode = maxNode.Right;
-            }
-
-            return maxNode;
-        }
+       
         
         private Node<T> Find(T value)
         {
