@@ -36,9 +36,8 @@ namespace Structures
             { 
                 var subTreeToBalance = RemoveImp(nodeToRemove);
                 _root = BalanceSubTree(subTreeToBalance);
+                Count--;
             }
-            
-            Count--;
         }
 
 
