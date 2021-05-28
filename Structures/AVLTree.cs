@@ -18,12 +18,12 @@ namespace Structures
            
             if (_root == null)
             {
-                _root = newNode.BalanceSubTree();
+                _root = BalanceSubTree(newNode);
             }
             else
             {
                 var subTreeRoot = PutInPlaceNode(newNode);    
-                _root = subTreeRoot.BalanceSubTree();
+                _root = BalanceSubTree(subTreeRoot);
             }
             
             Count++;
@@ -35,12 +35,7 @@ namespace Structures
             if(nodeToRemove != null)
             { 
                 var subTreeToBalance = RemoveImp(nodeToRemove);
-                _root = subTreeToBalance?.BalanceSubTree();
-            }
-
-            if (_root == null)
-            {
-                
+                _root = BalanceSubTree(subTreeToBalance);
             }
             
             Count--;
@@ -164,6 +159,54 @@ namespace Structures
                 next.ComputeHeight();
                 next = next.Parent;
             }
+        }
+        
+        /// <summary>
+        /// Balances the tree starting from a particular node up to the root
+        /// </summary>
+        /// <param name="startBalancingFromNode">Node to start from</param>
+        /// <returns>New root</returns>
+        private Node<T> BalanceSubTree(Node<T> startBalancingFromNode)
+        {
+            var nextNodeToConsider = startBalancingFromNode;
+            var newSubTreeRoot = startBalancingFromNode;
+            while (nextNodeToConsider != null)
+            {
+                if (nextNodeToConsider.HeightDifference(out var higherSubTree) == 2)
+                {
+                    if (higherSubTree == nextNodeToConsider.Left)
+                    {
+                        higherSubTree.HeightDifference(out var higher);
+                         
+                        if (higher == higherSubTree.Left)
+                        {
+                            nextNodeToConsider = nextNodeToConsider.RightRotation(); // higherSubTree
+                        }
+                        else if (higher == higherSubTree.Right)
+                        {
+                            nextNodeToConsider = higherSubTree.LeftRightRotation();
+                        }
+                    }
+                    else if(higherSubTree == nextNodeToConsider.Right)
+                    {
+                        higherSubTree.HeightDifference(out var higher);
+                        if (higher == higherSubTree.Right)
+                        {
+                            nextNodeToConsider = nextNodeToConsider.LeftRotation();
+                        }
+                        else if (higher == higherSubTree.Left)
+                        {
+                            nextNodeToConsider = higherSubTree.RightLeftRotation();
+                        }
+                    }
+                }
+
+                newSubTreeRoot = nextNodeToConsider;
+                nextNodeToConsider = nextNodeToConsider.Parent;
+                nextNodeToConsider?.ComputeHeight();
+            }
+
+            return newSubTreeRoot;
         }
     }
 }

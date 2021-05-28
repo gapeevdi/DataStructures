@@ -61,7 +61,7 @@ namespace Structures
                 Height = Math.Max(leftSubTreeHeight, rightSubTreeHeight) + 1;
             }
 
-            public int HeightDifference(out Node<TValue> higherSubTree)
+            internal int HeightDifference(out Node<TValue> higherSubTree)
             {
                 var leftSubTreeHeight = Left?.Height ?? -1;
                 var rightSubTreeHeight = Right?.Height ?? -1;
@@ -72,63 +72,18 @@ namespace Structures
                 return difference;
             }
             
-            
-            public Node<TValue> BalanceSubTree()
-            {
-                var nextNodeToConsider = this;
-                var newSubTreeRoot = this;
-                while (nextNodeToConsider != null)
-                {
-                    if (nextNodeToConsider.HeightDifference(out var higherSubTree) == 2)
-                    {
-                        if (higherSubTree == nextNodeToConsider.Left)
-                        {
-                            higherSubTree.HeightDifference(out var higher);
-                         
-                            if (higher == higherSubTree.Left)
-                            {
-                                nextNodeToConsider = nextNodeToConsider.RightRotation(); // higherSubTree
-                            }
-                            else if (higher == higherSubTree.Right)
-                            {
-                                nextNodeToConsider = higherSubTree.LeftRightRotation();
-                            }
-                        }
-                        else if(higherSubTree == nextNodeToConsider.Right)
-                        {
-                            higherSubTree.HeightDifference(out var higher);
-                            if (higher == higherSubTree.Right)
-                            {
-                                nextNodeToConsider = nextNodeToConsider.LeftRotation();
-                            }
-                            else if (higher == higherSubTree.Left)
-                            {
-                                nextNodeToConsider = higherSubTree.RightLeftRotation();
-                            }
-                        }
-                    }
-
-                    newSubTreeRoot = nextNodeToConsider;
-                    nextNodeToConsider = nextNodeToConsider.Parent;
-                    nextNodeToConsider?.ComputeHeight();
-                }
-
-                return newSubTreeRoot;
-            }
-            
             public Node<TValue> LeftRotation()
             {
             
-                var newRoot = this.Right;
+                var newRoot = Right;
                 var leftSubTree = newRoot.Left;
 
-                newRoot.Parent = this.Parent;
+                newRoot.Parent = Parent;
                 newRoot.Parent?.ReplaceChild(this, newRoot);
 
                 newRoot.Left = this;
-                this.Parent = newRoot;
-
-                this.Right = leftSubTree;
+                Parent = newRoot;
+                Right = leftSubTree;
 
                 if (leftSubTree != null)
                 {
@@ -144,16 +99,16 @@ namespace Structures
             
             public Node<TValue> RightRotation()
             {
-                var newRoot = this.Left;
+                var newRoot = Left;
                 var rightSubTree = newRoot.Right;
             
-                newRoot.Parent = this.Parent;
+                newRoot.Parent = Parent;
                 newRoot.Parent?.ReplaceChild(this, newRoot);
 
                 newRoot.Right = this;
-                this.Parent = newRoot;
+                Parent = newRoot;
 
-                this.Left = rightSubTree;
+                Left = rightSubTree;
                 if (rightSubTree != null)
                 {
                     rightSubTree.Parent = this;
@@ -174,7 +129,7 @@ namespace Structures
 
             public Node<TValue> RightLeftRotation()
             {
-                var newSubTreeRoot = this.RightRotation();
+                var newSubTreeRoot = RightRotation();
                 return newSubTreeRoot.Parent.LeftRotation();
             }
             
