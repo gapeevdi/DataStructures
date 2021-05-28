@@ -32,62 +32,68 @@ namespace Structures
         public void Remove(T value)
         {
             var nodeToRemove = Find(value);
-            var subTreeToBalance = RemoveImp(nodeToRemove);
-            _root = subTreeToBalance?.BalanceSubTree();
+            if(nodeToRemove != null)
+            { 
+                var subTreeToBalance = RemoveImp(nodeToRemove);
+                _root = subTreeToBalance?.BalanceSubTree();
+            }
+
+            if (_root == null)
+            {
+                
+            }
             
             Count--;
         }
-        
-        
+
+
         private Node<T> RemoveImp(Node<T> nodeToRemove)
         {
             var parent = nodeToRemove?.Parent;
-            Node<T> subTreeToBalance = null; 
-            if (nodeToRemove != null)
+            Node<T> subTreeToBalance;
+
+            // case 1 - leaf
+            if (nodeToRemove.IsLeaf)
             {
-                
-                // case 1 - leaf
-                if (nodeToRemove.IsLeaf)
+                subTreeToBalance = parent;
+                parent?.RemoveChild(nodeToRemove);
+            }
+
+            // case 2 - right child exists and left is null
+            else if (nodeToRemove.Right != null && nodeToRemove.Left == null)
+            {
+                subTreeToBalance = nodeToRemove.Right;
+                parent?.ReplaceChild(nodeToRemove, subTreeToBalance);
+                subTreeToBalance.Parent = parent;
+            }
+
+            // case 3 - left child exists so looking for the max value from the subtree
+            // in this case we need to replace a value of nodeToRemove node with the max value
+            // from the left subtree
+            else
+            {
+                subTreeToBalance = nodeToRemove.Left.FindMaxNode();
+                nodeToRemove.Value = subTreeToBalance.Value;
+                subTreeToBalance.Parent?.ReplaceChild(subTreeToBalance, subTreeToBalance.Left);
+                if (subTreeToBalance.Left != null)
                 {
-                    subTreeToBalance = parent;
-                    parent?.RemoveChild(nodeToRemove);
-                }
-                
-                // case 2 - right child exists and left is null
-                else if (nodeToRemove.Right != null && nodeToRemove.Left == null)
-                {
-                    subTreeToBalance = nodeToRemove.Right; 
-                    parent?.ReplaceChild(nodeToRemove, subTreeToBalance);
-                    subTreeToBalance.Parent = parent;
+                    subTreeToBalance.Left.Parent = subTreeToBalance.Parent;
                 }
 
-                // case 3 - left child exists so looking for the max value from the subtree
-                // in this case we need to replace a value of nodeToRemove node with the max value
-                // from the left subtree
-                else
-                {
-                    subTreeToBalance = nodeToRemove.Left.FindMaxNode();
-                    nodeToRemove.Value = subTreeToBalance.Value;
-                    subTreeToBalance.Parent?.ReplaceChild(subTreeToBalance, subTreeToBalance.Left);
-                    if (subTreeToBalance.Left != null)
-                    {
-                        subTreeToBalance.Left.Parent = subTreeToBalance.Parent;
-                    } 
-                    subTreeToBalance = nodeToRemove;
-                }
-                
-                if (nodeToRemove.IsRoot)
-                {
-                    _root = subTreeToBalance;
-                }
+                subTreeToBalance = nodeToRemove;
             }
-            
-            subTreeToBalance?.ComputeHeight();
+
+            if (nodeToRemove.IsRoot)
+            {
+                _root = subTreeToBalance;
+            }
+
+            RecomputeHeightForBranch(subTreeToBalance);
             return subTreeToBalance;
         }
 
-       
-        
+
+
         private Node<T> Find(T value)
         {
             var currentNode = _root;
