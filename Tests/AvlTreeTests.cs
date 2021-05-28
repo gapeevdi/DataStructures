@@ -3,17 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Structures;
+using Tests.AVLTreeTests.Extensions;
 
 namespace Tests.AVLTreeTests
 {
     [TestFixture]
     public class AVLTreeTests
     {
-
-        private static bool IsExpectedTreeHeight(int nodeCount, int actualHeight) =>
-            actualHeight >= Math.Floor(Math.Log2(nodeCount))
-            && actualHeight <= Math.Floor(1.45 * Math.Log2(nodeCount + 2));
-
 
         [TestCase(10, 100)]
         [TestCase(-10, 100)]
@@ -24,7 +20,7 @@ namespace Tests.AVLTreeTests
             AVLTestUtil.FillTreeWithValue(tree, value, count);
             
             Assert.AreEqual(count, tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(count, tree.Height));
+            AssertExtensions.AVL.IsHeightValid(count, tree.Height);
         }
         
         
@@ -44,7 +40,7 @@ namespace Tests.AVLTreeTests
             var addedValues = AVLTestUtil.FillTreeInLinearOrder(tree, startWith, count, step);
             
             Assert.AreEqual(count, tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count, tree.Height));
+            AssertExtensions.AVL.IsHeightValid(addedValues.Count, tree.Height);
         }
 
         [TestCase(0, 1, -10)]
@@ -63,7 +59,7 @@ namespace Tests.AVLTreeTests
             var addedValues = AVLTestUtil.FillTreeInLinearOrder(tree, startWith, count, step);
             
             Assert.AreEqual(count, tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count, tree.Height));
+            AssertExtensions.AVL.IsHeightValid(addedValues.Count, tree.Height);
         }
 
         [TestCase(-10, 10, 1)]
@@ -80,7 +76,7 @@ namespace Tests.AVLTreeTests
             var addedValues = AVLTestUtil.FillTreeInAlternateOrder(tree, start, end, step);
             
             Assert.AreEqual(addedValues.Count, tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count, tree.Height));
+            AssertExtensions.AVL.IsHeightValid(addedValues.Count, tree.Height);
         }
 
 
@@ -118,7 +114,7 @@ namespace Tests.AVLTreeTests
             }
             
             Assert.AreEqual(addedValues.Count - removedIndexes.Distinct().Count(), tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count - removedIndexes.Count, tree.Height));
+            AssertExtensions.AVL.IsHeightValid(addedValues.Count - removedIndexes.Count, tree.Height);
         }
 
         
