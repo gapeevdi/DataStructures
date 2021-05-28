@@ -6,6 +6,9 @@ namespace Structures
     {
         private class Node<TValue>
         {
+            
+            public int Height { get; private set; }
+
             public Node(TValue value)
             {
                 if (value == null)
@@ -47,21 +50,21 @@ namespace Structures
                 }
             }
 
-            public int Height()
+            public void ComputeHeight()
             {
                 if (IsLeaf)
                 {
-                    return 0;
+                    Height = 0;
                 }
-                var leftSubTreeHeight = Left?.Height() ?? 0;
-                var rightSubTreeHeight = Right?.Height() ?? 0;
-                return Math.Max(leftSubTreeHeight, rightSubTreeHeight) + 1;
+                var leftSubTreeHeight = Left?.Height ?? 0;
+                var rightSubTreeHeight = Right?.Height ?? 0;
+                Height = Math.Max(leftSubTreeHeight, rightSubTreeHeight) + 1;
             }
 
             public int HeightDifference(out Node<TValue> higherSubTree)
             {
-                var leftSubTreeHeight = Left?.Height() ?? -1;
-                var rightSubTreeHeight = Right?.Height() ?? -1;
+                var leftSubTreeHeight = Left?.Height ?? -1;
+                var rightSubTreeHeight = Right?.Height ?? -1;
                 var difference = Math.Abs(leftSubTreeHeight - rightSubTreeHeight);
                 
                 higherSubTree = leftSubTreeHeight > rightSubTreeHeight ? Left : Right;
@@ -107,6 +110,7 @@ namespace Structures
 
                     newSubTreeRoot = nextNodeToConsider;
                     nextNodeToConsider = nextNodeToConsider.Parent;
+                    nextNodeToConsider?.ComputeHeight();
                 }
 
                 return newSubTreeRoot;
@@ -131,6 +135,10 @@ namespace Structures
                     leftSubTree.Parent = this;
                 }
 
+                newRoot.Left.ComputeHeight();
+                newRoot.ComputeHeight();
+                newRoot.Parent?.ComputeHeight();
+                
                 return newRoot;
             }
             
@@ -151,6 +159,10 @@ namespace Structures
                     rightSubTree.Parent = this;
                 }
 
+                newRoot.Right.ComputeHeight();
+                newRoot.ComputeHeight();
+                newRoot.Parent?.ComputeHeight();
+                
                 return newRoot;
             }
             
