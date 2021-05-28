@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using Structures;
-using Structures.Utils;
 
-namespace Tests
+namespace Tests.AVLTreeTests
 {
     [TestFixture]
     public class AVLTreeTests
@@ -117,7 +117,7 @@ namespace Tests
                 removedIndexes.Add(index);
             }
             
-            Assert.AreEqual(addedValues.Count - removedIndexes.Count, tree.Count);
+            Assert.AreEqual(addedValues.Count - removedIndexes.Distinct().Count(), tree.Count);
             Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count - removedIndexes.Count, tree.Height));
         }
 

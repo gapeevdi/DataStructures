@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using Structures;
 
-namespace Structures.Utils
+namespace Tests.AVLTreeTests
 {
     public static class AVLTestUtil
     {
