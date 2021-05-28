@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Structures;
 
@@ -25,37 +26,61 @@ namespace Tests
             return array;
         }
 
-        private static int FillTreeInLinearOrder(AVLTree<int> tree, int startWith, int count = 1, int step = 1)
+        private static IReadOnlyList<int> FillTreeInLinearOrder(AVLTree<int> tree, int startWith, int count = 1, int step = 1)
         {
             var valuesToAdd = GenerateArray(startWith, count, step);
-            var addedValuesCount = 0;
             foreach (var value in valuesToAdd)
             {
                 tree.Add(value);
-                addedValuesCount++;
             }
 
-            return addedValuesCount;
+            return valuesToAdd;
         }
 
-        private static int FillTreeInAlternateOrder(AVLTree<int> tree, int startRange, int endRange, int step = 1)
+        private static void FillTreeWithValue(AVLTree<int> tree, int value, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                tree.Add(value);
+            }
+        }
+
+        private static IReadOnlyList<int> FillTreeInAlternateOrder(AVLTree<int> tree, int startRange, int endRange, int step = 1)
         {
             var lowValue = startRange;
             var topValue = endRange;
             var count = 0;
+            var addedValues = new List<int>();
 
             while (topValue > lowValue)
             {
                 tree.Add(lowValue);
                 tree.Add(topValue);
+                addedValues.Add(lowValue);
+                addedValues.Add(topValue);
+                
                 count += 2;
 
                 lowValue += step;
                 topValue -= step;
             }
 
-            return count;
+            return addedValues;
         }
+
+
+        [TestCase(10, 100)]
+        [TestCase(-10, 100)]
+        [TestCase(0, 100)]
+        public void Add_TheSameValueBeingInsertedManyTimes_TreeHeightLog2Count(int value, int count)
+        {
+            var tree = new AVLTree<int>();
+            FillTreeWithValue(tree, value, count);
+            
+            Assert.AreEqual(count, tree.Count);
+            Assert.IsTrue(IsExpectedTreeHeight(count, tree.Height));
+        }
+        
         
         [TestCase(0, 1, 10)]
         [TestCase(-1, 2, 10)]
@@ -70,10 +95,10 @@ namespace Tests
         public void Add_EachItemGreaterThanPrevious_TreeHeightLog2Count(int startWith, int count, int step)
         {
             var tree = new AVLTree<int>();
-            var addedValuesCount = FillTreeInLinearOrder(tree, startWith, count, step);
+            var addedValues = FillTreeInLinearOrder(tree, startWith, count, step);
             
             Assert.AreEqual(count, tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(addedValuesCount, tree.Height));
+            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count, tree.Height));
         }
 
         [TestCase(0, 1, -10)]
@@ -89,10 +114,10 @@ namespace Tests
         public void Add_EachItemLessThanPrevious_TreeHeightLog2Count(int startWith, int count, int step)
         {
             var tree = new AVLTree<int>();
-            var addedValuesCount = FillTreeInLinearOrder(tree, startWith, count, step);
+            var addedValues = FillTreeInLinearOrder(tree, startWith, count, step);
             
             Assert.AreEqual(count, tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(addedValuesCount, tree.Height));
+            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count, tree.Height));
         }
 
         [TestCase(-10, 10, 1)]
@@ -102,117 +127,65 @@ namespace Tests
         [TestCase(-10000, 10000, 3)]
         [TestCase(-50000, 50000, 7)]
         [TestCase(-500000, 500000, 11)]
+        
         public void Add_AlternatingOrder_TreeHeightLog2Count(int start, int end, int step)
         {
             var tree = new AVLTree<int>();
-            var addedValuesCount = FillTreeInAlternateOrder(tree, start, end, step);
+            var addedValues = FillTreeInAlternateOrder(tree, start, end, step);
             
-            Assert.AreEqual(addedValuesCount, tree.Count);
-            Assert.IsTrue(IsExpectedTreeHeight(addedValuesCount, tree.Height));
+            Assert.AreEqual(addedValues.Count, tree.Count);
+            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count, tree.Height));
         }
 
-        [Test]
-        public void AddTest_1()
+
+        [TestCase(-1, 2, -10, 1)]
+        [TestCase(-1, 3, -10, 2)]
+        [TestCase(-5, 10, -10, 4)]
+        [TestCase(-10, 20, -10, 10)]
+        [TestCase(-50, 100, -10, 30)]
+        [TestCase(-500, 1000, -10, 300)]
+        [TestCase(-5000, 10000, -10, 2000)]
+        [TestCase(-50000, 100000, -10, 25000)]
+        [TestCase(-500000, 1000000, -10, 400000)]
+        [TestCase(-1, 2, 10, 1)]
+        [TestCase(-1, 3, 10, 2)]
+        [TestCase(-5, 10, 10, 4)]
+        [TestCase(-10, 20, 10, 10)]
+        [TestCase(-50, 100, 10, 30)]
+        [TestCase(-500, 1000, 10, 300)]
+        [TestCase(-5000, 10000, 10, 2000)]
+        [TestCase(-50000, 100000, 10, 25000)]
+        [TestCase(-500000, 1000000, 10, 400000)]
+        public void Remove_ParticularAmountOfNodeRemoved_TreeHeightLog2Count(int startWith, int count, int step, int numberOfElementsToRemove)
         {
             var tree = new AVLTree<int>();
-            
-            tree.Add(10);
-            tree.Add(20);
-            tree.Add(30);
-            tree.Add(40);
-            tree.Add(350);
-            tree.Add(50);
+            var addedValues = FillTreeInLinearOrder(tree, startWith, count, step);
 
-            var height = tree.Height;
-            Assert.AreEqual(tree.Height, Math.Ceiling(Math.Log2(tree.Count)));
+            var rnd = new Random();
+            var removedIndexes = new List<int>();
+
+            while (removedIndexes.Count < numberOfElementsToRemove)
+            {
+                var index = rnd.Next(0, addedValues.Count - 1);
+                tree.Remove(addedValues[index]);
+                removedIndexes.Add(index);
+            }
+            
+            Assert.AreEqual(addedValues.Count - removedIndexes.Count, tree.Count);
+            Assert.IsTrue(IsExpectedTreeHeight(addedValues.Count - removedIndexes.Count, tree.Height));
         }
+
         
-        [Test]
-        public void AddTest_2()
+        [TestCase(-500, 1000, 10)]
+        public void Remove_NotExistingNode_TreeHeightRemainsTheSame(int startWith, int count, int step)
         {
             var tree = new AVLTree<int>();
+            FillTreeInLinearOrder(tree, startWith, count, step);
+            var notExistingValue = 10000000;
             
-            tree.Add(100);
-            tree.Add(500);
-            tree.Add(300);
-            tree.Add(400);
-            tree.Add(200);
-            tree.Add(150);
-
-            var height = tree.Height;
-            Assert.AreEqual(tree.Height, Math.Ceiling(Math.Log2(tree.Count)));
-        }
-
-        [Test]
-        public void Remove()
-        {
-            var tree = new AVLTree<int>();
+            tree.Remove(notExistingValue);
             
-            tree.Add(100);
-            tree.Add(500);
-            tree.Add(300);
-            tree.Add(400);
-            tree.Add(200);
-            tree.Add(150);
-            tree.Add(450);
-            tree.Add(350);
-            tree.Add(360);
-            tree.Add(370);
-            tree.Add(380);
-            tree.Add(390);
-            
-            tree.Remove(390);
-            tree.Remove(380);
-            tree.Remove(370);
-            tree.Remove(360);
-            tree.Remove(350);
-            tree.Remove(450);
-            tree.Remove(150);
-            tree.Remove(200);
-            tree.Remove(400);
-            tree.Remove(300);
-            tree.Remove(500);
-            tree.Remove(100);
-            
-            tree.Add(100);
-            tree.Add(500);
-            tree.Add(300);
-            tree.Add(400);
-            tree.Add(200);
-            tree.Add(150);
-            tree.Add(450);
-            tree.Add(350);
-            tree.Add(360);
-            tree.Add(370);
-            tree.Add(380);
-            tree.Add(390);
-            
-            tree.Remove(390);
-            tree.Remove(380);
-            tree.Remove(370);
-            tree.Remove(360);
-            tree.Remove(350);
-            tree.Remove(450);
-            tree.Remove(150);
-            tree.Remove(200);
-            tree.Remove(400);
-            tree.Remove(300);
-            tree.Remove(500);
-            tree.Remove(100);
-        }
-        
-        [Test]
-        public void Remove_1()
-        {
-            var tree = new AVLTree<int>();
-            
-            tree.Add(200);
-            tree.Add(100);
-            tree.Add(300);
-            tree.Add(400);
-            
-            tree.Remove(100);
-            
+            Assert.AreEqual(count, tree.Count);
         }
     }
 }
