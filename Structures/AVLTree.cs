@@ -8,7 +8,7 @@ namespace Structures
 
         private Node<T> _root;
 
-        public int Height => _root?.Height() ?? 0;
+        public int Height => _root?.Height ?? 0;
         public int Count { get; private set; }
         public bool Contains(T value) => Find(value) != null;
         
@@ -82,6 +82,7 @@ namespace Structures
                 }
             }
             
+            subTreeToBalance?.ComputeHeight();
             return subTreeToBalance;
         }
 
@@ -145,8 +146,18 @@ namespace Structures
                 }
             }
 
+            RecomputeHeightForBranch(newNodeParent);
             return newNodeParent;
         }
 
+        private void RecomputeHeightForBranch(Node<T> leaf)
+        {
+            var next = leaf;
+            while (next != null)
+            {
+                next.ComputeHeight();
+                next = next.Parent;
+            }
+        }
     }
 }
