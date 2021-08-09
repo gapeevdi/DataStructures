@@ -64,54 +64,50 @@ namespace Structures
             var newValueIndex = node.KeysCount - 1;
             if (node.IsLeaf)
             {
-                while (value.CompareTo(node.Keys[newValueIndex]) <= 0 && newValueIndex >= 0)
+                while (newValueIndex >= 0 && value.CompareTo(node.Keys[newValueIndex]) <= 0)
                 {
                     //DO NOTHING BUT DECREMENTING newValueIndex
                     newValueIndex--;
                 }
-                
-                node.PushChildrenOneStepForward(newValueIndex + 1);
-                node.InsertKey(value, newValueIndex);
+
+                node.InsertKey(value, newValueIndex + 1);
                 return;
             }
 
-            while (value.CompareTo(node.Keys[newValueIndex]) <= 0 && newValueIndex >= 0)
+            while (newValueIndex >= 0 && value.CompareTo(node.Keys[newValueIndex]) <= 0)
             {
-                while (value.CompareTo(node.Keys[newValueIndex]) <= 0 && newValueIndex >= 0)
-                {
-                    //DO NOTHING BUT DECREMENTING newValueIndex
-                    newValueIndex--;
-                }
-
-                newValueIndex++;
-                var childNode = node.Children[newValueIndex];
-                if (childNode.IsFull)
-                {
-                    var middleValue = SplitChildNode(node, childNode);
-                    if (value.CompareTo(middleValue) > 0)
-                    {
-                        newValueIndex++;
-                    }
-                }
-                AddImplementation(node.Children[newValueIndex], value);
-                
+                //DO NOTHING BUT DECREMENTING newValueIndex
+                newValueIndex--;
             }
+
+            newValueIndex++;
+            var childNode = node.Children[newValueIndex];
+            if (childNode.IsFull)
+            {
+                var middleValue = SplitChildNode(node, childNode);
+                if (value.CompareTo(middleValue) > 0)
+                {
+                    newValueIndex++;
+                }
+            }
+
+            AddImplementation(node.Children[newValueIndex], value);
         }
 
         private T SplitChildNode(BTreeNode<T> parent, BTreeNode<T> childToSplit)
         {
             var newNode = AllocateNode();
 
-            childToSplit.MoveKeysToNode(newNode, _degree.Value + 1);
-            childToSplit.MoveChildrenToNode(newNode, _degree.Value + 1);
+            var position = parent.GetChildIndex(childToSplit);
+            childToSplit.MoveKeysToNode(newNode, _degree.Value);
+            childToSplit.MoveChildrenToNode(newNode, _degree.Value);
 
-            var middleValue = parent.Keys[_degree.Value];
+            var middleValue = childToSplit.Keys[_degree.Value - 1];
             
-           //parent.PushKeysOneStepForward(parent.GetChildIndex(childToSplit) + 1);
-            parent.InsertKey(childToSplit.Keys[_degree.Value], parent.GetChildIndex(childToSplit) + 1);
+            parent.InsertKey(middleValue, position);
+            childToSplit.RemoveKey(_degree.Value - 1);
             
-            //parent.PushChildrenOneStepForward(parent.GetChildIndex(childToSplit) + 1);
-            parent.InsertChild(newNode, parent.GetChildIndex(childToSplit) + 1);
+            parent.InsertChild(newNode, position + 1);
 
             return middleValue;
         }
@@ -159,22 +155,6 @@ namespace Structures
             Children.Insert(position, child);
         }
 
-        public void PushKeysOneStepForward(int startFromIndex)
-        {
-            for (var i = Keys.Count - 1; i >= startFromIndex; i--)
-            {
-                Keys[i + 1] = Keys[i];
-            }
-        }
-
-        public void PushChildrenOneStepForward(int startFromIndex)
-        {
-            for (var i = Children.Count - 1; i >= startFromIndex ; i++)
-            {
-                Children[i + 1] = Children[i];
-            }
-        }
-
         public void MoveKeysToNode(BTreeNode<T> destinationNode, int sourceStartIndex)
         {
             for (var i = sourceStartIndex; i < Keys.Count; i++)
@@ -182,19 +162,28 @@ namespace Structures
                 destinationNode.AddValue(Keys[i]);
             }
 
-            Keys.RemoveRange(_degree.Value + 1, int.MaxValue);
+            Keys.RemoveRange(sourceStartIndex, Keys.Count - sourceStartIndex);
+        }
+
+        public void RemoveKey(int position)
+        {
+            if (position > 0 && position < Keys.Count)
+            {
+                Keys.RemoveAt(position);    
+            }
         }
 
         public void MoveChildrenToNode(BTreeNode<T> destinationNode, int sourceStartIndex)
         {
-            if (IsLeaf)
+            if (IsLeaf == false)
             {
                 for (var i = sourceStartIndex; i < Children.Count; i++)
                 {
                     destinationNode.Children.Add(Children[i]);
-                }    
+                }
+
+                Children.RemoveRange(sourceStartIndex, Children.Count - sourceStartIndex);
             }
-            
         }
 
         internal int GetChildIndex(BTreeNode<T> child) => Children.IndexOf(child);
