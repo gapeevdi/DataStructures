@@ -14,11 +14,6 @@ namespace Structures
             _root = AllocateNode();
         }
 
-        private BTreeNode<T> AllocateNode()
-        {
-            return new BTreeNode<T>(_degree);
-        }
-
         public void Add(T value)
         {
             if (_root.IsFull)
@@ -32,6 +27,11 @@ namespace Structures
             }
 
             AddImplementation(_root, value);
+        }
+        
+        private BTreeNode<T> AllocateNode()
+        {
+            return new BTreeNode<T>(_degree);
         }
 
         private void AddImplementation(BTreeNode<T> node, T value)
